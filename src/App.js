@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import firebase from 'firebase/compat/app'; // alterado aqui
 import 'firebase/compat/auth'; // alterado aqui
 
+
 // Configure Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyB7Mev47x4w4WfcR5wMvcLdMgrwKwb1P6M",
@@ -22,15 +23,40 @@ if (!firebase.apps.length) {
 function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [user, setUser] = useState(null);
   const [error, setError] = useState(null);
 
   const handleLogin = async () => {
     try {
-      await firebase.auth().signInWithEmailAndPassword(email, password);
+      const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
       setError(null);
+      setUser(userCredential.user);
       // Login bem-sucedido, você pode redirecionar ou fazer outras ações aqui
     } catch (err) {
       setError(err.message);
+      setUser(null);
+    }
+  }
+
+  const handleGoogleLogin = async () => {
+    try {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      const userCredential = await firebase.auth().signInWithPopup(provider);
+      setError(null);
+      setUser(userCredential.user);
+      // Login bem-sucedido, você pode redirecionar ou fazer outras ações aqui
+    } catch (err) {
+      setError(err.message);
+      setUser(null);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await firebase.auth().signOut();
+      window.location.href = '/login'
+    } catch (err) {
+      console.log("Erro ao fazer Logout");
     }
   };
 
@@ -42,15 +68,25 @@ function App() {
         placeholder="Email"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-      />
+      /><br></br>
       <input
         type="password"
         placeholder="Password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-      />
+      /><br></br>
       <button onClick={handleLogin}>Login</button>
+      <button onClick={handleGoogleLogin}>Login com Google</button><br></br>
+      <button onClick={handleLogout}>Sair</button>
       {error && <p>{error}</p>}
+      {user && (
+        <div>
+          <h2>Dados do Usuário:</h2>
+          <p>Nome: {user.displayName || 'Não fornecido'}</p>
+          <p>Email: {user.email}</p>
+          <p>ID do Usuário: {user.uid}</p>
+        </div>
+      )}
     </div>
   );
 }
